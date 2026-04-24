@@ -21,9 +21,11 @@ import { generateUUID } from "../utils";
 import {
   type Chat,
   chat,
+  documentChunk,
   type DBMessage,
   document,
   message,
+  sourceDocument,
   type Suggestion,
   stream,
   suggestion,
@@ -627,6 +629,138 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatbotError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
+    );
+  }
+}
+
+export async function createSourceDocument({
+  id,
+  userId,
+  chatId,
+  filename,
+  blobUrl,
+  mimeType,
+}: {
+  id: string;
+  userId: string;
+  chatId?: string;
+  filename: string;
+  blobUrl: string;
+  mimeType: string;
+}) {
+  try {
+    const [created] = await db
+      .insert(sourceDocument)
+      .values({
+        id,
+        userId,
+        chatId,
+        filename,
+        blobUrl,
+        mimeType,
+        status: "uploaded",
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to create source document"
+    );
+  }
+}
+
+export async function updateSourceDocumentStatus({
+  id,
+  status,
+  error,
+}: {
+  id: string;
+  status: "uploaded" | "indexed" | "failed";
+  error?: string;
+}) {
+  try {
+    return await db
+      .update(sourceDocument)
+      .set({
+        status,
+        error,
+        updatedAt: new Date(),
+      })
+      .where(eq(sourceDocument.id, id));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update source document status"
+    );
+  }
+}
+
+export async function saveDocumentChunks({
+  chunks,
+}: {
+  chunks: Array<typeof documentChunk.$inferInsert>;
+}) {
+  try {
+    if (chunks.length === 0) {
+      return [];
+    }
+    return await db.insert(documentChunk).values(chunks).returning();
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to save chunks");
+  }
+}
+
+export async function getIndexedSourceDocumentsByUserId({
+  userId,
+  chatId,
+}: {
+  userId: string;
+  chatId?: string;
+}) {
+  try {
+    const where = chatId
+      ? and(
+          eq(sourceDocument.userId, userId),
+          eq(sourceDocument.status, "indexed"),
+          eq(sourceDocument.chatId, chatId)
+        )
+      : and(eq(sourceDocument.userId, userId), eq(sourceDocument.status, "indexed"));
+
+    return await db
+      .select()
+      .from(sourceDocument)
+      .where(where)
+      .orderBy(desc(sourceDocument.createdAt));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get indexed source documents"
+    );
+  }
+}
+
+export async function getSourceDocumentsByIds({
+  ids,
+  userId,
+}: {
+  ids: string[];
+  userId: string;
+}) {
+  try {
+    if (ids.length === 0) {
+      return [];
+    }
+    return await db
+      .select()
+      .from(sourceDocument)
+      .where(and(eq(sourceDocument.userId, userId), inArray(sourceDocument.id, ids)));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get source documents by ids"
     );
   }
 }

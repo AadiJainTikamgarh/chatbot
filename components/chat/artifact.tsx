@@ -265,7 +265,11 @@ function PureArtifact({
       : true;
 
   const { width: windowWidth, height: windowHeight } = useWindowSize();
-  const isMobile = windowWidth ? windowWidth < 768 : false;
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  const isMobile = hasMounted && windowWidth < 768;
 
   const artifactDefinition = artifactDefinitions.find(
     (definition) => definition.kind === artifact.kind

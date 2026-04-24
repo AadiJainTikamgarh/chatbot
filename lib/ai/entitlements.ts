@@ -1,4 +1,5 @@
 import type { UserType } from "@/app/(auth)/auth";
+import { isProductionEnvironment } from "../constants";
 
 type Entitlements = {
   maxMessagesPerHour: number;
@@ -6,9 +7,13 @@ type Entitlements = {
 
 export const entitlementsByUserType: Record<UserType, Entitlements> = {
   guest: {
-    maxMessagesPerHour: 10,
+    maxMessagesPerHour: isProductionEnvironment
+      ? 10
+      : Number(process.env.DEV_MAX_MESSAGES_PER_HOUR ?? 1000),
   },
   regular: {
-    maxMessagesPerHour: 10,
+    maxMessagesPerHour: isProductionEnvironment
+      ? 10
+      : Number(process.env.DEV_MAX_MESSAGES_PER_HOUR ?? 1000),
   },
 };

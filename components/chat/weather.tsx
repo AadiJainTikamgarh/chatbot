@@ -283,6 +283,38 @@ export function Weather({
 }: {
   weatherAtLocation?: WeatherAtLocation;
 }) {
+  const hasRequiredWeatherShape =
+    !!weatherAtLocation &&
+    typeof weatherAtLocation === "object" &&
+    "current" in weatherAtLocation &&
+    "current_units" in weatherAtLocation &&
+    "hourly" in weatherAtLocation &&
+    "daily" in weatherAtLocation &&
+    Array.isArray(weatherAtLocation.hourly?.time) &&
+    Array.isArray(weatherAtLocation.hourly?.temperature_2m) &&
+    Array.isArray(weatherAtLocation.daily?.sunrise) &&
+    Array.isArray(weatherAtLocation.daily?.sunset) &&
+    weatherAtLocation.hourly.temperature_2m.length > 0 &&
+    weatherAtLocation.daily.sunrise.length > 0 &&
+    weatherAtLocation.daily.sunset.length > 0 &&
+    typeof weatherAtLocation.current?.temperature_2m === "number";
+
+  if (!hasRequiredWeatherShape) {
+    const errorMessage =
+      weatherAtLocation &&
+      typeof weatherAtLocation === "object" &&
+      "error" in weatherAtLocation &&
+      typeof weatherAtLocation.error === "string"
+        ? weatherAtLocation.error
+        : "Weather data is unavailable right now.";
+
+    return (
+      <div className="w-full rounded-2xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+        {errorMessage}
+      </div>
+    );
+  }
+
   const currentHigh = Math.max(
     ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
   );

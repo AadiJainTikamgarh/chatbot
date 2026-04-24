@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
+  integer,
   json,
   pgTable,
   primaryKey,
@@ -134,3 +135,43 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+export const sourceDocument = pgTable("SourceDocument", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  chatId: uuid("chatId").references(() => chat.id),
+  filename: text("filename").notNull(),
+  blobUrl: text("blobUrl").notNull(),
+  mimeType: varchar("mimeType", { length: 128 }).notNull(),
+  status: varchar("status", {
+    enum: ["uploaded", "indexed", "failed"],
+  })
+    .notNull()
+    .default("uploaded"),
+  error: text("error"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type SourceDocument = InferSelectModel<typeof sourceDocument>;
+
+export const documentChunk = pgTable("DocumentChunk", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  documentId: uuid("documentId")
+    .notNull()
+    .references(() => sourceDocument.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  chatId: uuid("chatId").references(() => chat.id),
+  chunkIndex: integer("chunkIndex").notNull(),
+  content: text("content").notNull(),
+  pageStart: integer("pageStart"),
+  pageEnd: integer("pageEnd"),
+  qdrantPointId: varchar("qdrantPointId", { length: 128 }).notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type DocumentChunk = InferSelectModel<typeof documentChunk>;

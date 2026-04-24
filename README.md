@@ -36,13 +36,25 @@
 
 ## Model Providers
 
-This template uses the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to access multiple AI models through a unified interface. Models are configured in `lib/ai/models.ts` with per-model provider routing. Included models: Mistral, Moonshot, DeepSeek, OpenAI, and xAI.
+This project is configured to use the Gemini API directly via the AI SDK Google provider. Models are configured in `lib/ai/models.ts`.
 
-### AI Gateway Authentication
+### Gemini Authentication
 
-**For Vercel deployments**: Authentication is handled automatically via OIDC tokens.
+Set `GEMINI_API_KEY` in your `.env.local` file.
 
-**For non-Vercel deployments**: You need to provide an AI Gateway API key by setting the `AI_GATEWAY_API_KEY` environment variable in your `.env.local` file.
+## PDF RAG (Qdrant + Blob)
+
+- PDF files upload to Vercel Blob via `app/(chat)/api/files/upload/route.ts`
+- Uploaded PDFs are parsed, chunked, embedded, and indexed into Qdrant Cloud
+- Chat retrieval pulls top-k relevant PDF chunks and injects grounded context into `/api/chat`
+
+Required environment variables:
+
+- `QDRANT_URL`
+- `QDRANT_API_KEY`
+- `QDRANT_COLLECTION`
+- `GEMINI_EMBEDDING_MODEL` (default: `text-embedding-004`)
+- `RAG_TOP_K`, `RAG_CHUNK_SIZE`, `RAG_CHUNK_OVERLAP`
 
 With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to direct LLM providers like [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://ai-sdk.dev/providers/ai-sdk-providers) with just a few lines of code.
 
