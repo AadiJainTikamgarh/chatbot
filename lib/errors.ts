@@ -3,7 +3,6 @@ export type ErrorType =
   | "unauthorized"
   | "forbidden"
   | "not_found"
-  | "rate_limit"
   | "offline";
 
 export type Surface =
@@ -92,8 +91,6 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
     case "forbidden:auth":
       return "Your account does not have access to this feature.";
 
-    case "rate_limit:chat":
-      return "You've reached the message limit. Come back in 1 hour to continue chatting.";
     case "not_found:chat":
       return "The requested chat was not found. Please check the chat ID and try again.";
     case "forbidden:chat":
@@ -127,8 +124,6 @@ function getStatusCodeByType(type: ErrorType) {
       return 403;
     case "not_found":
       return 404;
-    case "rate_limit":
-      return 429;
     case "offline":
       return 503;
     default:
