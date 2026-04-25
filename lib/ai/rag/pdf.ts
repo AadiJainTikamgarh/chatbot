@@ -1,4 +1,32 @@
-import { PDFParse } from "pdf-parse";
+import { createRequire } from "node:module";
+
+type PDFParseInstance = {
+  getText(): Promise<{ text?: string }>;
+  destroy(): Promise<void> | void;
+};
+
+type PDFParseOptions = {
+  data: Buffer;
+  disableWorker?: boolean;
+  [key: string]: unknown;
+};
+
+type PDFParseModule = {
+  PDFParse: new (options: PDFParseOptions) => PDFParseInstance;
+};
+
+let pdfParseModulePromise: Promise<PDFParseModule> | null = null;
+const nodeRequire = createRequire(import.meta.url);
+
+async function loadPdfParseModule() {
+  if (!pdfParseModulePromise) {
+    pdfParseModulePromise = Promise.resolve(
+      nodeRequire("pdf-parse") as PDFParseModule
+    );
+  }
+
+  return pdfParseModulePromise;
+}
 
 function getCloudinaryPdfFallbackUrls(url: string): string[] {
   if (!url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) {
@@ -42,11 +70,8 @@ export async function extractPdfTextFromBuffer(
   pdfBuffer: ArrayBuffer | Buffer
 ): Promise<string> {
   const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
-  const parser = new PDFParse({
-    data: buffer,
-    // pdf.js accepts this at runtime; cast keeps TypeScript happy.
-    ...( { disableWorker: true } as Record<string, unknown> ),
-  } as ConstructorParameters<typeof PDFParse>[0]);
+  const { PDFParse } = await loadPdfParseModule();
+  const parser = new PDFParse({ data: buffer, disableWorker: true });
   const parsed = await parser.getText();
   await parser.destroy();
   return parsed.text?.trim() ?? "";

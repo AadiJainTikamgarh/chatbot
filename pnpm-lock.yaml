@@ -29,6 +29,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.35.3
         version: 6.36.4
+      '@napi-rs/canvas':
+        specifier: 0.1.80
+        version: 0.1.80
       '@opentelemetry/api':
         specifier: ^1.9.0
         version: 1.9.0
